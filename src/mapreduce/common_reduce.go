@@ -1,10 +1,19 @@
 package mapreduce
 
+import (
+	"io/ioutil"
+	"fmt"
+	"encoding/json"
+	"bytes"
+	"sort"
+	"os"
+)
+
 func doReduce(
 	jobName string, // the name of the whole MapReduce job
 	reduceTask int, // which reduce task this is
 	outFile string, // write the output here
-	nMap int, // the number of map tasks that were run ("M" in the paper)
+	nMap int,       // the number of map tasks that were run ("M" in the paper)
 	reduceF func(key string, values []string) string,
 ) {
 	//
@@ -43,5 +52,47 @@ func doReduce(
 	// file.Close()
 	//
 	// Your code here (Part I).
-	//
+
+	kvs := make([]KeyValue, 0)
+	for i := 0; i < nMap; i++ {
+		// read intermediate file
+		filename := jobName + string(i) + string(reduceTask)
+		contents, err := ioutil.ReadFile(filename)
+		if err != nil {
+			fmt.Printf("Reduce task %d read file %s failed %s", reduceTask, filename, err)
+		}
+		temp := make([]KeyValue, 0)
+		dec := json.NewDecoder(bytes.NewReader(contents))
+		dec.Decode(&temp)
+
+		kvs = append(kvs, temp...)
+	}
+
+	// sort key value pairs
+	sort.Slice(kvs, func(i, j int) bool {
+		return kvs[i].Key < kvs[j].Key
+	})
+
+	// call reduceF
+	k := kvs[0].Key
+	vs := make([]string, 0)
+	var result string
+	for i := 0; i < len(kvs); i++ {
+		if k == kvs[i].Key {
+			vs = append(vs, kvs[i].Value)
+		} else {
+			result += reduceF(k, vs)
+			k = kvs[i].Key
+			vs = make([]string, 0)
+		}
+	}
+
+	// write output
+	file, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Printf("Write mr output failed reduce task %d", reduceTask)
+	}
+	enc := json.NewEncoder(file)
+	enc.Encode(&result)
+	file.Close()
 }
