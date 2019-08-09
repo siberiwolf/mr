@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	nNumber = 100000
+	//nNumber = 100000
+	nNumber = 10
 	nMap    = 20
 	nReduce = 10
 )
@@ -35,10 +36,12 @@ func MapFunc(file string, value string) (res []KeyValue) {
 
 // Just return key
 func ReduceFunc(key string, values []string) string {
+	var num int
 	for _, e := range values {
 		debug("Reduce %s %v\n", key, e)
+		num += 1
 	}
-	return ""
+	return fmt.Sprintf("%s%s%d\n", key, ":", num)
 }
 
 // Checks input file agaist output file: each input number should show up

@@ -57,10 +57,12 @@ func doMap(
 	//
 	// Your code here (Part I).
 
+	fmt.Printf("Map task %d reduce num %d\n", mapTask, nReduce)
+
 	// read the file
 	contents, err := ioutil.ReadFile(inFile)
 	if err != nil {
-		fmt.Printf("Map task %d read %s failed %s", mapTask, inFile, err)
+		fmt.Printf("Map task %d read %s failed %s\n", mapTask, inFile, err)
 	}
 
 	// call mapF on file content
@@ -70,15 +72,25 @@ func doMap(
 	kvMap := make(map[int][]KeyValue)
 	for i := 0; i < len(kvs); i++ {
 		kv := kvs[i]
+		fmt.Printf("Key is %s value is %s\n", kv.Key, kv.Value)
 		r := ihash(kv.Key) % nReduce
-		kvMap[r] = append(kvMap[r], kv)
+		temp, exist := kvMap[r]
+		fmt.Printf("Map key %d exist %t\n", r, exist)
+		if !exist {
+			temp = make([]KeyValue, 0)
+		}
+		temp = append(temp, kv)
+		kvMap[r] = temp
 	}
 
+	fmt.Println(kvMap)
+
 	for i := range kvMap {
-		filename := jobName + string(mapTask) + string(i)
-		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666);
+		filename := fmt.Sprintf("%s%d%d", jobName, mapTask, i)
+		fmt.Printf("Write intermediate file %s\n", filename)
+		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666);
 		if err != nil {
-			fmt.Printf("Map task %d write imtermediate file %s failed %s", mapTask, filename, err)
+			fmt.Printf("Map task %d write intermediate file %s failed %s\n", mapTask, filename, err)
 		}
 		kvArray := kvMap[i]
 		enc := json.NewEncoder(file)

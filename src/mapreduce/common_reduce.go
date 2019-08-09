@@ -56,22 +56,26 @@ func doReduce(
 	kvs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
 		// read intermediate file
-		filename := jobName + string(i) + string(reduceTask)
+		filename := fmt.Sprintf("%s%d%d", jobName, i, reduceTask)
+		fmt.Printf("Read intermediate file %s\n", filename)
 		contents, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Printf("Reduce task %d read file %s failed %s", reduceTask, filename, err)
+			fmt.Printf("Reduce task %d read file %s failed %s\n", reduceTask, filename, err)
 		}
 		temp := make([]KeyValue, 0)
 		dec := json.NewDecoder(bytes.NewReader(contents))
 		dec.Decode(&temp)
-
+		fmt.Printf("Temp list is %s\n", temp)
 		kvs = append(kvs, temp...)
 	}
+
+	fmt.Printf("Kvs is %s\n", kvs)
 
 	// sort key value pairs
 	sort.Slice(kvs, func(i, j int) bool {
 		return kvs[i].Key < kvs[j].Key
 	})
+	fmt.Printf("Sorted kvs is %s\n", kvs)
 
 	// call reduceF
 	k := kvs[0].Key
@@ -81,17 +85,23 @@ func doReduce(
 		if k == kvs[i].Key {
 			vs = append(vs, kvs[i].Value)
 		} else {
-			result += reduceF(k, vs)
+			result = fmt.Sprintf("%s%s", result, reduceF(k, vs))
+			fmt.Printf("Reduce k %s values %s result %s\n", k, vs, result)
 			k = kvs[i].Key
 			vs = make([]string, 0)
+			vs = append(vs, kvs[i].Value)
 		}
 	}
+	result = fmt.Sprintf("%s%s", result, reduceF(k, vs))
+	fmt.Printf("Reduce k %s values %s result %s\n", k, vs, result)
+	fmt.Printf("Reduce result is %s\n", result)
 
 	// write output
 	file, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		fmt.Printf("Write mr output failed reduce task %d", reduceTask)
+		fmt.Printf("Write mr output failed reduce task %d\n", reduceTask)
 	}
+	fmt.Printf("Write reduce out file %s", outFile)
 	enc := json.NewEncoder(file)
 	enc.Encode(&result)
 	file.Close()
