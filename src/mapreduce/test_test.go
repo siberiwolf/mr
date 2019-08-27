@@ -41,12 +41,13 @@ func ReduceFunc(key string, values []string) string {
 		debug("Reduce %s %v\n", key, e)
 		num += 1
 	}
-	return fmt.Sprintf("%s%s%d\n", key, ":", num)
+	return fmt.Sprintf("%d", num)
 }
 
 // Checks input file agaist output file: each input number should show up
 // in the output file in string sorted order
 func check(t *testing.T, files []string) {
+	fmt.Printf("check file %s", files)
 	output, err := os.Open("mrtmp.test")
 	if err != nil {
 		log.Fatal("check: ", err)
@@ -84,7 +85,7 @@ func check(t *testing.T, files []string) {
 		i++
 	}
 	if i != nNumber {
-		t.Fatalf("Expected %d lines in output\n", nNumber)
+		t.Fatalf("Expected %d lines in output and i is %d\n", nNumber, i)
 	}
 }
 

@@ -56,7 +56,7 @@ func doReduce(
 	kvs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
 		// read intermediate file
-		filename := fmt.Sprintf("%s%d%d", jobName, i, reduceTask)
+		filename := fmt.Sprintf("mrtmp.%s-%d-%d", jobName, i, reduceTask)
 		fmt.Printf("Read intermediate file %s\n", filename)
 		contents, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -80,28 +80,23 @@ func doReduce(
 	// call reduceF
 	k := kvs[0].Key
 	vs := make([]string, 0)
-	var result string
+	result := make([]KeyValue, 0)
 	for i := 0; i < len(kvs); i++ {
 		if k == kvs[i].Key {
 			vs = append(vs, kvs[i].Value)
 		} else {
-			result = fmt.Sprintf("%s%s", result, reduceF(k, vs))
-			fmt.Printf("Reduce k %s values %s result %s\n", k, vs, result)
+			result = append(result, KeyValue{k, reduceF(k, vs)})
 			k = kvs[i].Key
 			vs = make([]string, 0)
 			vs = append(vs, kvs[i].Value)
 		}
 	}
-	result = fmt.Sprintf("%s%s", result, reduceF(k, vs))
-	fmt.Printf("Reduce k %s values %s result %s\n", k, vs, result)
-	fmt.Printf("Reduce result is %s\n", result)
+	result = append(result, KeyValue{k, reduceF(k, vs)})
 
-	// write output
 	file, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Printf("Write mr output failed reduce task %d\n", reduceTask)
 	}
-	fmt.Printf("Write reduce out file %s", outFile)
 	enc := json.NewEncoder(file)
 	enc.Encode(&result)
 	file.Close()

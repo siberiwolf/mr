@@ -86,7 +86,7 @@ func doMap(
 	fmt.Println(kvMap)
 
 	for i := range kvMap {
-		filename := fmt.Sprintf("%s%d%d", jobName, mapTask, i)
+		filename := fmt.Sprintf("mrtmp.%s-%d-%d", jobName, mapTask, i)
 		fmt.Printf("Write intermediate file %s\n", filename)
 		file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666);
 		if err != nil {

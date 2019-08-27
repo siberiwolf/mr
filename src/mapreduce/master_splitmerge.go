@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"sort"
+	"io/ioutil"
+	"bytes"
 )
 
 // merge combines the results of the many reduce jobs into a single output file
@@ -17,20 +19,34 @@ func (mr *Master) merge() {
 	for i := 0; i < mr.nReduce; i++ {
 		p := mergeName(mr.jobName, i)
 		fmt.Printf("Merge: read %s\n", p)
-		file, err := os.Open(p)
+		//file, err := os.Open(p)
+		//if err != nil {
+		//	log.Fatal("Merge: ", err)
+		//}
+		//dec := json.NewDecoder(file)
+		//for {
+		//	var kv KeyValue
+		//	err = dec.Decode(&kv)
+		//	fmt.Printf("%s\n", err)
+		//	if err != nil {
+		//		break
+		//	}
+		//	kvs[kv.Key] = kv.Value
+		//}
+
+		//file.Close()
+
+		contents, err := ioutil.ReadFile(p)
 		if err != nil {
-			log.Fatal("Merge: ", err)
+			fmt.Printf("Merge file %s failed %s\n", p, err)
 		}
-		dec := json.NewDecoder(file)
-		for {
-			var kv KeyValue
-			err = dec.Decode(&kv)
-			if err != nil {
-				break
-			}
+		temp := make([]KeyValue, 0)
+		dec := json.NewDecoder(bytes.NewReader(contents))
+		dec.Decode(&temp)
+
+		for _, kv := range temp {
 			kvs[kv.Key] = kv.Value
 		}
-		file.Close()
 	}
 	var keys []string
 	for k := range kvs {
