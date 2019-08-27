@@ -84,5 +84,6 @@ func (mr *Master) CleanupFiles() {
 	for i := 0; i < mr.nReduce; i++ {
 		removeFile(mergeName(mr.jobName, i))
 	}
-	removeFile("mrtmp." + mr.jobName)
+	// 保留计算结果
+	//removeFile("mrtmp." + mr.jobName)
 }
