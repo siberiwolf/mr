@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	//nNumber = 100000
-	nNumber = 10
+	nNumber = 100000
 	nMap    = 20
 	nReduce = 10
 )
@@ -156,7 +155,7 @@ func TestSequentialSingle(t *testing.T) {
 }
 
 func TestSequentialMany(t *testing.T) {
-	mr := Sequential("test", makeInputs(5), 3, MapFunc, ReduceFunc)
+	mr := Sequential("test", makeInputs(5), 2, MapFunc, ReduceFunc)
 	mr.Wait()
 	check(t, mr.files)
 	checkWorker(t, mr.stats)
